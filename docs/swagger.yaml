@@ -1,39 +1,233 @@
+```yaml
 openapi: 3.0.0
 info:
-  title: Adoption Status Lookup API
+  title: Adoption Status Query Service API
   version: 1.0.0
+  description: >
+    This API provides adoption status retrieval functionality for the Shaggy Mission pet adoption system.
+    The service allows querying the adoption status of specific pets by their unique identifier.
+    This service is designed to help rescue organizations, adoption centers, volunteers, and potential
+    adopters check the current adoption status of pets in real-time. The API provides detailed
+    status information including current adoption state, notes, and timestamps to support
+    informed decision-making in the adoption process.
+
 servers:
   - url: http://localhost:3013
+    description: Development server
+
 paths:
   /adoption/status/{petId}:
     get:
-      summary: Get adoption status by petId
+      summary: Get adoption status by pet ID
+      description: >
+        Retrieves the current adoption status for a specific pet using its unique identifier.
+        This endpoint provides real-time status information to support adoption workflows,
+        administrative oversight, and user inquiries about pet availability.
+        
+        **Status Information Provided:**
+        - Current adoption status (not_adopted, reserved, adopted)
+        - Additional notes and context
+        - Last update timestamp
+        - Complete status record with MongoDB identifiers
+        
+        **Status Types Returned:**
+        - **not_adopted**: Pet is available for adoption
+        - **reserved**: Pet is reserved by a potential adopter
+        - **adopted**: Pet has been successfully adopted
+        
+        **Common Use Cases:**
+        - Check pet availability before showing interest
+        - Verify adoption status during application process
+        - Administrative status verification
+        - Integration with listing and search services
+        - Mobile app real-time status updates
+        
+        **Performance Features:**
+        - Efficient MongoDB query by unique petId
+        - Fast response time for real-time applications
+        - Minimal data transfer with focused response
+        - Proper error handling for missing records
+      tags:
+        - Adoption Status Query
       parameters:
-        - in: path
-          name: petId
+        - name: petId
+          in: path
           required: true
+          description: >
+            Unique identifier of the pet (MongoDB ObjectId format).
+            This should be the same petId used when creating the adoption status record.
           schema:
             type: string
+            pattern: '^[0-9a-fA-F]{24}$'
+            example: "64f8b2a1c3d4e5f6a7b8c9d0"
+          examples:
+            valid_pet_id:
+              summary: Valid pet ID
+              value: "64f8b2a1c3d4e5f6a7b8c9d0"
+            another_pet_id:
+              summary: Another valid pet ID
+              value: "64f8b2a1c3d4e5f6a7b8c9d1"
       responses:
         '200':
-          description: Status found
+          description: Successfully retrieved adoption status
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AdoptionStatus'
+              examples:
+                available_pet:
+                  summary: Pet available for adoption
+                  value:
+                    _id: "64f8b2a1c3d4e5f6a7b8c9d4"
+                    petId: "64f8b2a1c3d4e5f6a7b8c9d0"
+                    status: "not_adopted"
+                    notes: "Healthy golden retriever ready for adoption"
+                    updatedAt: "2024-01-15T10:30:00.000Z"
+                    __v: 0
+                reserved_pet:
+                  summary: Pet reserved by adopter
+                  value:
+                    _id: "64f8b2a1c3d4e5f6a7b8c9d5"
+                    petId: "64f8b2a1c3d4e5f6a7b8c9d1"
+                    status: "reserved"
+                    notes: "Reserved by Smith family, pending home visit scheduled for Jan 25"
+                    updatedAt: "2024-01-20T14:45:00.000Z"
+                    __v: 0
+                adopted_pet:
+                  summary: Pet successfully adopted
+                  value:
+                    _id: "64f8b2a1c3d4e5f6a7b8c9d6"
+                    petId: "64f8b2a1c3d4e5f6a7b8c9d2"
+                    status: "adopted"
+                    notes: "Successfully adopted by Johnson family on January 18, 2024"
+                    updatedAt: "2024-01-18T16:20:00.000Z"
+                    __v: 0
         '404':
-          description: Status not found
+          description: Not Found - No status record exists for this pet
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                status_not_found:
+                  summary: Status not found for pet
+                  value:
+                    message: "Status not found for this pet."
+                invalid_pet_id:
+                  summary: Pet ID doesn't exist in system
+                  value:
+                    message: "Status not found for this pet."
+        '500':
+          description: Internal Server Error - Database or server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                database_error:
+                  summary: Database connection error
+                  value:
+                    message: "Failed to fetch status"
+                    error: "Database connection failed"
+                server_error:
+                  summary: General server error
+                  value:
+                    message: "Failed to fetch status"
+                    error: "Internal server error"
+
 components:
   schemas:
     AdoptionStatus:
       type: object
       properties:
+        _id:
+          type: string
+          description: Unique MongoDB ObjectId for the status record
+          example: "64f8b2a1c3d4e5f6a7b8c9d4"
+          pattern: '^[0-9a-fA-F]{24}$'
         petId:
           type: string
+          description: Unique identifier of the pet
+          example: "64f8b2a1c3d4e5f6a7b8c9d0"
+          pattern: '^[0-9a-fA-F]{24}$'
         status:
           type: string
+          description: Current adoption status
+          enum: ["not_adopted", "reserved", "adopted"]
+          example: "not_adopted"
         notes:
           type: string
+          description: Additional notes or comments about the adoption status
+          example: "Healthy golden retriever ready for adoption"
+          nullable: true
         updatedAt:
           type: string
           format: date-time
+          description: Timestamp when the status was last updated
+          example: "2024-01-15T10:30:00.000Z"
+        __v:
+          type: integer
+          description: Mongoose version field
+          example: 0
+      required:
+        - _id
+        - petId
+        - status
+        - updatedAt
+      description: Complete adoption status record for a specific pet
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: High-level error message
+          example: "Failed to fetch status"
+        error:
+          type: string
+          description: Detailed error information
+          example: "Database connection failed"
+          nullable: true
+      required:
+        - message
+      description: Standard error response format for API errors
+
+  examples:
+    StatusCheckWorkflow:
+      summary: Typical status check scenarios
+      description: >
+        This example demonstrates common status check scenarios:
+        1. User browses pets → Check availability status
+        2. User shows interest → Verify pet is still available
+        3. During application → Check if pet is reserved
+        4. Post-adoption → Confirm adoption status
+      value:
+        - scenario: "Browse available pets"
+          petId: "64f8b2a1c3d4e5f6a7b8c9d0"
+          expected_status: "not_adopted"
+        - scenario: "Verify reservation"
+          petId: "64f8b2a1c3d4e5f6a7b8c9d1"
+          expected_status: "reserved"
+        - scenario: "Confirm adoption"
+          petId: "64f8b2a1c3d4e5f6a7b8c9d2"
+          expected_status: "adopted"
+
+    IntegrationPatterns:
+      summary: Service integration patterns
+      description: >
+        Common integration patterns for the status query service:
+        1. Pet listing services check status before display
+        2. Mobile apps verify status in real-time
+        3. Administrative dashboards monitor status changes
+        4. Notification systems trigger based on status
+      value:
+        - integration: "Pet List Service"
+          usage: "Filter pets by availability status"
+          endpoint: "GET /adoption/status/{petId}"
+        - integration: "Mobile Applications"
+          usage: "Real-time status verification"
+          endpoint: "GET /adoption/status/{petId}"
+        - integration: "Admin Dashboard"
+          usage: "Status monitoring and reporting"
+          endpoint: "GET /adoption/status/{petId}"
+```

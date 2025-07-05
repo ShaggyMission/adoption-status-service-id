@@ -10,7 +10,7 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+app.use('/statusId-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use(statusRoutes);
 
 module.exports = app;

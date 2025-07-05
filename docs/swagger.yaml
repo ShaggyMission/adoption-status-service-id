@@ -1,0 +1,39 @@
+openapi: 3.0.0
+info:
+  title: Adoption Status Lookup API
+  version: 1.0.0
+servers:
+  - url: http://localhost:3013
+paths:
+  /adoption/status/{petId}:
+    get:
+      summary: Get adoption status by petId
+      parameters:
+        - in: path
+          name: petId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Status found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdoptionStatus'
+        '404':
+          description: Status not found
+components:
+  schemas:
+    AdoptionStatus:
+      type: object
+      properties:
+        petId:
+          type: string
+        status:
+          type: string
+        notes:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time

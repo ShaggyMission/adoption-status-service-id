@@ -20,33 +20,6 @@ paths:
     get:
       summary: Get adoption status by pet ID
       description: >
-        Retrieves the current adoption status for a specific pet using its unique identifier.
-        This endpoint provides real-time status information to support adoption workflows,
-        administrative oversight, and user inquiries about pet availability.
-        
-        **Status Information Provided:**
-        - Current adoption status (not_adopted, reserved, adopted)
-        - Additional notes and context
-        - Last update timestamp
-        - Complete status record with MongoDB identifiers
-        
-        **Status Types Returned:**
-        - **not_adopted**: Pet is available for adoption
-        - **reserved**: Pet is reserved by a potential adopter
-        - **adopted**: Pet has been successfully adopted
-        
-        **Common Use Cases:**
-        - Check pet availability before showing interest
-        - Verify adoption status during application process
-        - Administrative status verification
-        - Integration with listing and search services
-        - Mobile app real-time status updates
-        
-        **Performance Features:**
-        - Efficient MongoDB query by unique petId
-        - Fast response time for real-time applications
-        - Minimal data transfer with focused response
-        - Proper error handling for missing records
       tags:
         - Adoption Status Query
       parameters:

@@ -1,11 +1,15 @@
 const request = require('supertest');
-const app = require('../app');
-const connectDB = require('../config/db');
 const mongoose = require('mongoose');
+const { MongoMemoryServer } = require('mongodb-memory-server');
+const app = require('../app');
 const AdoptionStatus = require('../models/status.model');
 
+let mongoServer;
+
 beforeAll(async () => {
-  await connectDB();
+  mongoServer = await MongoMemoryServer.create();
+  const uri = mongoServer.getUri();
+  await mongoose.connect(uri);
 });
 
 beforeEach(async () => {
@@ -21,7 +25,8 @@ afterEach(async () => {
 });
 
 afterAll(async () => {
-  await mongoose.connection.close();
+  await mongoose.disconnect();
+  await mongoServer.stop();
 });
 
 describe('GET /adoption/status/:petId', () => {
@@ -30,5 +35,5 @@ describe('GET /adoption/status/:petId', () => {
 
     expect(res.statusCode).toBe(200);
     expect(res.body).toHaveProperty('petId', 'pet123');
-  }, 10000);
+  });
 });
